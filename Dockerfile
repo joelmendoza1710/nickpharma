@@ -1,6 +1,7 @@
 FROM node:20-slim AS base
 WORKDIR /app
 RUN apt-get update && apt-get install -y openssl ca-certificates netcat-openbsd && rm -rf /var/lib/apt/lists/*
+RUN npm install -g tsx
 
 FROM base AS deps
 COPY package.json package-lock.json* bun.lock* ./
@@ -12,6 +13,7 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/nickpharma?schema=public"
 
 RUN npx prisma generate
 RUN npm run build

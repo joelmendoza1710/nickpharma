@@ -11,8 +11,16 @@ function daysFromNow(days: number): Date {
 
 async function main() {
   console.log("🧹 Limpiando datos previos...");
+  await db.auditLog.deleteMany();
+  await db.stockMovement.deleteMany();
+  await db.prescription.deleteMany();
+  await db.saleItemLot.deleteMany();
   await db.saleItem.deleteMany();
   await db.sale.deleteMany();
+  await db.cashShift.deleteMany();
+  await db.purchaseOrderItem.deleteMany();
+  await db.purchaseOrder.deleteMany();
+  await db.supplier.deleteMany();
   await db.lot.deleteMany();
   await db.product.deleteMany();
   await db.category.deleteMany();

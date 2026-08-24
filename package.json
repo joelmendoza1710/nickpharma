@@ -16,7 +16,7 @@
     "db:seed-suppliers": "tsx prisma/seed-suppliers.ts"
   },
   "prisma": {
-    "seed": "./node_modules/.bin/tsx prisma/seed-all.ts"
+    "seed": "tsx prisma/seed-all.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

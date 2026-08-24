@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-export PATH="./node_modules/.bin:$PATH"
-
 echo "========================================="
 echo "  NickPharma - Iniciando Contenedor Web  "
 echo "========================================="
@@ -14,7 +12,7 @@ until npx prisma db push --skip-generate; do
 done
 
 echo "🌱 Base de datos sincronizada. Ejecutando siembra de datos de prueba..."
-npx tsx prisma/seed-all.ts || node_modules/.bin/tsx prisma/seed-all.ts
+npx prisma db seed
 
 echo "🚀 Servidor NickPharma listo. Iniciando aplicación..."
 exec node server.js
