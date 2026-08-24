@@ -1,0 +1,283 @@
+// Prisma schema - NickPharma
+// Gestión de farmacia: productos, lotes, clientes, ventas, usuarios, caja, proveedores, auditoría
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ====== Usuarios y autenticación ======
+
+enum Role {
+  ADMIN
+  SUPERVISOR
+  CASHIER
+  PHARMACIST
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(CASHIER)
+  active       Boolean  @default(true)
+  image        String?
+  sales        Sale[]
+  cashShifts   CashShift[]
+  purchaseOrders PurchaseOrder[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  color       String    @default("emerald")
+  products    Product[]
+  createdAt   DateTime  @default(now())
+}
+
+model Product {
+  id           String      @id @default(cuid())
+  name         String
+  activeIngredient String?
+  presentation String?
+  dosage       String?
+  barcode      String      @unique
+  laboratory   String?
+  salePrice    Float
+  costPrice    Float       @default(0)
+  minStock     Int         @default(10)
+  requiresPrescription Boolean @default(false)
+  taxRate      Float       @default(0)
+  categoryId   String
+  category     Category    @relation(fields: [categoryId], references: [id])
+  lots         Lot[]
+  saleItems    SaleItem[]
+  stockMovements StockMovement[]
+  purchaseOrderItems PurchaseOrderItem[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  // Campos INVIMA (regulatorio Colombia)
+  cum                  String?   // Código Único de Medicamentos
+  invimaRegistration   String?   // Registro sanitario INVIMA
+  invimaExpiryDate     DateTime? // Vencimiento del registro sanitario
+  therapeuticAction    String?   // Acción terapéutica (ej: analgésico, antihipertensivo)
+  @@index([categoryId])
+  @@index([name])
+  @@index([cum])
+}
+
+model Lot {
+  id           String    @id @default(cuid())
+  lotNumber    String
+  expiryDate   DateTime
+  quantity     Int
+  initialQty   Int
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  saleAllocations SaleItemLot[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  @@index([productId])
+  @@index([expiryDate])
+}
+
+model Customer {
+  id           String      @id @default(cuid())
+  fullName     String
+  document     String?     @unique
+  phone        String?
+  email        String?
+  address      String?
+  loyaltyPoints Int        @default(0)
+  allergies    String?
+  chronicConditions String?
+  bloodType    String?
+  emergencyContact String?
+  sales        Sale[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Sale {
+  id           String      @id @default(cuid())
+  invoiceNumber String     @unique
+  customerId   String?
+  customer     Customer?   @relation(fields: [customerId], references: [id])
+  userId       String?
+  cashier      User?       @relation(fields: [userId], references: [id])
+  subtotal     Float
+  taxTotal     Float
+  discount     Float       @default(0)
+  total        Float
+  pointsRedeemed Int      @default(0)
+  pointsDiscount Float    @default(0)
+  paymentMethod String     @default("cash")
+  cashReceived Float?
+  change       Float?
+  status       String      @default("completed")
+  cashierName  String      @default("Cajero")
+  items        SaleItem[]
+  prescription Prescription?
+  createdAt    DateTime    @default(now())
+  @@index([customerId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([paymentMethod])
+}
+
+model SaleItem {
+  id           String    @id @default(cuid())
+  saleId       String
+  sale         Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product   @relation(fields: [productId], references: [id])
+  quantity     Int
+  unitPrice    Float
+  lineTotal    Float
+  lotId        String?
+  lotAllocations SaleItemLot[]
+  @@index([saleId])
+  @@index([productId])
+}
+
+model SaleItemLot {
+  id           String    @id @default(cuid())
+  saleItemId   String
+  saleItem     SaleItem  @relation(fields: [saleItemId], references: [id], onDelete: Cascade)
+  lotId        String
+  lot          Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  quantity     Int
+  unitPrice    Float
+  lineTotal    Float
+  @@index([saleItemId])
+  @@index([lotId])
+}
+
+model Prescription {
+  id                String   @id @default(cuid())
+  saleId            String   @unique
+  sale              Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  doctorName        String
+  doctorLicense     String
+  prescriptionNumber String
+  prescriptionDate  DateTime
+  notes             String?
+  createdAt         DateTime @default(now())
+  @@index([doctorName])
+  @@index([prescriptionNumber])
+}
+
+model CashShift {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  openingAmount  Float
+  closingAmount  Float?
+  expectedAmount Float?
+  difference     Float?
+  status         String   @default("open")
+  notes          String?
+  openedAt       DateTime @default(now())
+  closedAt       DateTime?
+  @@index([userId])
+  @@index([status])
+  @@index([openedAt])
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  contactName String?
+  phone       String?
+  email       String?
+  address     String?
+  taxId       String?
+  notes       String?
+  active      Boolean  @default(true)
+  purchaseOrders PurchaseOrder[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PurchaseOrder {
+  id            String   @id @default(cuid())
+  orderNumber   String   @unique
+  supplierId    String
+  supplier      Supplier @relation(fields: [supplierId], references: [id])
+  status        String   @default("draft")
+  total         Float    @default(0)
+  notes         String?
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  expectedDate  DateTime?
+  orderedAt     DateTime?
+  receivedAt    DateTime?
+  createdAt     DateTime @default(now())
+  items         PurchaseOrderItem[]
+  @@index([supplierId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PurchaseOrderItem {
+  id             String       @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder  PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product      @relation(fields: [productId], references: [id])
+  quantity       Int
+  unitCost       Float
+  lineTotal      Float
+  receivedQty    Int          @default(0)
+  lotNumber      String?
+  expiryDate     DateTime?
+  @@index([purchaseOrderId])
+  @@index([productId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  userName   String
+  action     String
+  entityType String
+  entityId   String?
+  description String
+  metadata   String?
+  createdAt  DateTime @default(now())
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model StockMovement {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type        String
+  quantity    Int
+  balance     Int
+  reference   String?
+  lotId       String?
+  userId      String?
+  userName    String
+  createdAt   DateTime @default(now())
+  @@index([productId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Settings {
+  key       String   @id
+  value     String
+  label     String?
+  updatedAt DateTime @updatedAt
+}

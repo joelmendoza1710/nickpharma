@@ -1,0 +1,19 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="vitaliaGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10B981"/>
+      <stop offset="1" stop-color="#0E7490"/>
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="32" y1="8" x2="56" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#34D399"/>
+      <stop offset="1" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#vitaliaGrad)"/>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="white" fill-opacity="0.06"/>
+  <!-- Cruz de salud redondeada -->
+  <path d="M26 14H38V26H50V38H38V50H26V38H14V26H26V14Z" fill="white" fill-opacity="0.96"/>
+  <!-- Hoja digital (elemento dinámico de tecnología + naturaleza) -->
+  <path d="M44 16C44 16 54 18 54 30C54 36 50 40 44 40C44 34 44 22 44 16Z" fill="url(#leafGrad)"/>
+  <path d="M47 22C49 26 49 31 47 35" stroke="#065F46" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/>
+</svg>
